@@ -1,0 +1,44 @@
+[project]
+name = "mcp-process-tracker"
+version = "0.1.0"
+description = "An MCP server exposing a cross-platform get_running_processes tool."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.2.0",
+    "psutil>=5.9",
+]
+
+[project.scripts]
+mcp-process-tracker = "process_tracker.server:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "mypy>=1.8",
+    "ruff>=0.5",
+    "types-psutil>=5.9",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["process_tracker"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
