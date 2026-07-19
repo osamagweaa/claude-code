@@ -1,11 +1,11 @@
 ---
-description: Guided feature development with codebase understanding and architecture focus
+description: Guided feature development with codebase understanding, architecture focus, and automatic changelog logging on completion
 argument-hint: Optional feature description
 ---
 
 # Feature Development
 
-You are helping a developer implement a new feature. Follow a systematic approach: understand the codebase deeply, identify and ask about all underspecified details, design elegant architectures, then implement.
+You are helping a developer implement a new feature. Follow a systematic approach: understand the codebase deeply, identify and ask about all underspecified details, design elegant architectures, implement, then record the completed work in the project's changelog.
 
 ## Core Principles
 
@@ -14,6 +14,7 @@ You are helping a developer implement a new feature. Follow a systematic approac
 - **Read files identified by agents**: When launching agents, ask them to return lists of the most important files to read. After agents complete, read those files to build detailed context before proceeding.
 - **Simple and elegant**: Prioritize readable, maintainable, architecturally sound code
 - **Use TodoWrite**: Track all progress throughout
+- **Log completed work**: When a feature is fully implemented and verified, automatically record it in the project's changelog (see Phase 8). Only successful, completed work gets logged.
 
 ---
 
@@ -121,5 +122,23 @@ If the user says "whatever you think is best", provide your recommendation and g
    - Key decisions made
    - Files modified
    - Suggested next steps
+
+---
+
+## Phase 8: Changelog Update
+
+**Goal**: Automatically record the completed feature in the project's changelog — every time a feature reaches this phase successfully.
+
+**When this runs**: ONLY after the feature has been implemented and verified (Phases 5–6 completed and the user has not abandoned or deferred the work). If the task failed, was cancelled, was left partially done, or the user chose not to proceed, DO NOT write a changelog entry. Logging is for successful, complete work only.
+
+**Actions**:
+1. Locate the project changelog. Check, in order: `CHANGELOG.md`, `CHANGELOG`, `docs/CHANGELOG.md`, `HISTORY.md`. Use the first that exists.
+2. If none exists, create `CHANGELOG.md` at the repo root using the [Keep a Changelog](https://keepachangelog.com) convention, starting with an `## [Unreleased]` section.
+3. **Match the existing file's style exactly** — the same heading levels, bullet character, tense, and grouping (e.g. Added / Changed / Fixed) the file already uses. Never impose a new format on a file that has its own.
+4. Add **one** concise, user-facing entry summarizing what was built — what changed and why it matters, not a list of files. Place it under the most recent unreleased section (e.g. `## [Unreleased]`); if the project only uses dated or versioned sections, add a new `## [Unreleased]` block at the top.
+5. **Avoid duplicates**: if an equivalent entry for this work already exists, refine that entry instead of adding a second one.
+6. Add the changelog file to the list of modified files in your Phase 7 summary, and tell the user which entry you logged.
+
+**Keep entries short**: one line per feature, phrased for a reader of release notes — not a developer reading the diff.
 
 ---

@@ -4,7 +4,7 @@ A comprehensive, structured workflow for feature development with specialized ag
 
 ## Overview
 
-The Feature Development Plugin provides a systematic 7-phase approach to building new features. Instead of jumping straight into code, it guides you through understanding the codebase, asking clarifying questions, designing architecture, and ensuring quality—resulting in better-designed features that integrate seamlessly with your existing code.
+The Feature Development Plugin provides a systematic 8-phase approach to building new features. Instead of jumping straight into code, it guides you through understanding the codebase, asking clarifying questions, designing architecture, ensuring quality, and logging the finished work to your changelog—resulting in better-designed features that integrate seamlessly with your existing code.
 
 ## Philosophy
 
@@ -18,7 +18,7 @@ This plugin embeds these practices into a structured workflow that runs automati
 
 ## Command: `/feature-dev`
 
-Launches a guided feature development workflow with 7 distinct phases.
+Launches a guided feature development workflow with 8 distinct phases.
 
 **Usage:**
 ```bash
@@ -32,7 +32,7 @@ Or simply:
 
 The command will guide you through the entire process interactively.
 
-## The 7-Phase Workflow
+## The 8-Phase Workflow
 
 ### Phase 1: Discovery
 
@@ -246,6 +246,24 @@ Suggested next steps:
 - Update documentation
 ```
 
+### Phase 8: Changelog Update
+
+**Goal**: Automatically record the completed feature in the project's changelog
+
+**What happens:**
+- Runs **only** when the feature was implemented and verified successfully—failed, cancelled, or deferred work is never logged
+- Finds the project changelog (`CHANGELOG.md`, `CHANGELOG`, `docs/CHANGELOG.md`, or `HISTORY.md`), or creates one using the [Keep a Changelog](https://keepachangelog.com) format if none exists
+- Matches the file's existing style and adds one concise, user-facing entry under the unreleased section
+- Avoids duplicate entries and reports which entry was logged
+
+**Example:**
+```
+## [Unreleased]
+
+### Added
+- OAuth authentication supporting Google and GitHub sign-in
+```
+
 ## Agents
 
 ### `code-explorer`
@@ -319,7 +337,7 @@ Suggested next steps:
 /feature-dev Add rate limiting to API endpoints
 ```
 
-Let the workflow guide you through all 7 phases.
+Let the workflow guide you through all 8 phases.
 
 ### Manual agent invocation:
 
@@ -340,7 +358,7 @@ Let the workflow guide you through all 7 phases.
 
 ## Best Practices
 
-1. **Use the full workflow for complex features**: The 7 phases ensure thorough planning
+1. **Use the full workflow for complex features**: The 8 phases ensure thorough planning
 2. **Answer clarifying questions thoughtfully**: Phase 3 prevents future confusion
 3. **Choose architecture deliberately**: Phase 4 gives you options for a reason
 4. **Don't skip code review**: Phase 6 catches issues before they reach production
