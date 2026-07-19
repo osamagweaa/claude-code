@@ -4,7 +4,7 @@ A comprehensive, structured workflow for feature development with specialized ag
 
 ## Overview
 
-The Feature Development Plugin provides a systematic 8-phase approach to building new features. Instead of jumping straight into code, it guides you through understanding the codebase, asking clarifying questions, designing architecture, ensuring quality, and logging the finished work to your changelog—resulting in better-designed features that integrate seamlessly with your existing code.
+The Feature Development Plugin provides a systematic 8-phase approach to building new features. Instead of jumping straight into code, it guides you through understanding the codebase, asking clarifying questions, designing architecture, ensuring quality, and logging every task outcome (success, failure, or abandoned) for tracking and learning—resulting in better-designed features that integrate seamlessly with your existing code.
 
 ## Philosophy
 
@@ -246,17 +246,26 @@ Suggested next steps:
 - Update documentation
 ```
 
-### Phase 8: Changelog Update
+### Phase 8: Logging (Task Log + Changelog)
 
-**Goal**: Automatically record the completed feature in the project's changelog
+**Goal**: Record what happened with the task—for reminders, learning from failure, and project tracking
 
 **What happens:**
-- Runs **only** when the feature was implemented and verified successfully—failed, cancelled, or deferred work is never logged
-- Finds the project changelog (`CHANGELOG.md`, `CHANGELOG`, `docs/CHANGELOG.md`, or `HISTORY.md`), or creates one using the [Keep a Changelog](https://keepachangelog.com) format if none exists
-- Matches the file's existing style and adds one concise, user-facing entry under the unreleased section
-- Avoids duplicate entries and reports which entry was logged
+- Runs on **every** outcome (completed, failed, or abandoned), unless you directly tell it not to log this task
+- **Task log (always):** prepends an entry to `docs/TASK_LOG.md` (or an existing `TASK_LOG.md` / `WORKLOG.md`) with the date, outcome status, a summary, and—for failures/abandoned work—the reason and a lesson/next step
+- **Changelog (successful work only):** if the feature shipped, also adds a concise release-note entry to `CHANGELOG.md` ([Keep a Changelog](https://keepachangelog.com) format), matching the file's existing style and avoiding duplicates
+- Reports exactly what was logged and where
 
-**Example:**
+**Example — task log entry (a failure):**
+```
+## 2026-07-19 — OAuth Google/GitHub sign-in
+- **Outcome**: Failed
+- **Summary**: Attempted an OAuth provider abstraction plus routes/middleware
+- **Reason**: Provider callback conflicts with the existing session middleware
+- **Lesson / next step**: Make session middleware provider-agnostic before retrying
+```
+
+**Example — changelog entry (a success):**
 ```
 ## [Unreleased]
 
