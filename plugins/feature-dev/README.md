@@ -4,7 +4,7 @@ A comprehensive, structured workflow for feature development with specialized ag
 
 ## Overview
 
-The Feature Development Plugin provides a systematic 7-phase approach to building new features. Instead of jumping straight into code, it guides you through understanding the codebase, asking clarifying questions, designing architecture, and ensuring quality—resulting in better-designed features that integrate seamlessly with your existing code.
+The Feature Development Plugin provides a systematic 8-phase approach to building new features. Instead of jumping straight into code, it guides you through understanding the codebase, asking clarifying questions, designing architecture, ensuring quality, and logging every task outcome (success, failure, or abandoned) for tracking and learning—resulting in better-designed features that integrate seamlessly with your existing code.
 
 ## Philosophy
 
@@ -18,7 +18,7 @@ This plugin embeds these practices into a structured workflow that runs automati
 
 ## Command: `/feature-dev`
 
-Launches a guided feature development workflow with 7 distinct phases.
+Launches a guided feature development workflow with 8 distinct phases.
 
 **Usage:**
 ```bash
@@ -32,7 +32,7 @@ Or simply:
 
 The command will guide you through the entire process interactively.
 
-## The 7-Phase Workflow
+## The 8-Phase Workflow
 
 ### Phase 1: Discovery
 
@@ -246,6 +246,33 @@ Suggested next steps:
 - Update documentation
 ```
 
+### Phase 8: Logging (Task Log + Changelog)
+
+**Goal**: Record what happened with the task—for reminders, learning from failure, and project tracking
+
+**What happens:**
+- Runs on **every** outcome (completed, failed, or abandoned), unless you directly tell it not to log this task
+- **Task log (always):** prepends an entry to `docs/TASK_LOG.md` (or an existing `TASK_LOG.md` / `WORKLOG.md`) with the date, outcome status, a summary, and—for failures/abandoned work—the reason and a lesson/next step
+- **Changelog (successful work only):** if the feature shipped, also adds a concise release-note entry to `CHANGELOG.md` ([Keep a Changelog](https://keepachangelog.com) format), matching the file's existing style and avoiding duplicates
+- Reports exactly what was logged and where
+
+**Example — task log entry (a failure):**
+```
+## 2026-07-19 — OAuth Google/GitHub sign-in
+- **Outcome**: Failed
+- **Summary**: Attempted an OAuth provider abstraction plus routes/middleware
+- **Reason**: Provider callback conflicts with the existing session middleware
+- **Lesson / next step**: Make session middleware provider-agnostic before retrying
+```
+
+**Example — changelog entry (a success):**
+```
+## [Unreleased]
+
+### Added
+- OAuth authentication supporting Google and GitHub sign-in
+```
+
 ## Agents
 
 ### `code-explorer`
@@ -319,7 +346,7 @@ Suggested next steps:
 /feature-dev Add rate limiting to API endpoints
 ```
 
-Let the workflow guide you through all 7 phases.
+Let the workflow guide you through all 8 phases.
 
 ### Manual agent invocation:
 
@@ -340,7 +367,7 @@ Let the workflow guide you through all 7 phases.
 
 ## Best Practices
 
-1. **Use the full workflow for complex features**: The 7 phases ensure thorough planning
+1. **Use the full workflow for complex features**: The 8 phases ensure thorough planning
 2. **Answer clarifying questions thoughtfully**: Phase 3 prevents future confusion
 3. **Choose architecture deliberately**: Phase 4 gives you options for a reason
 4. **Don't skip code review**: Phase 6 catches issues before they reach production

@@ -1,11 +1,11 @@
 ---
-description: Guided feature development with codebase understanding and architecture focus
+description: Guided feature development with codebase understanding, architecture focus, and automatic logging of every task outcome to a task log and changelog
 argument-hint: Optional feature description
 ---
 
 # Feature Development
 
-You are helping a developer implement a new feature. Follow a systematic approach: understand the codebase deeply, identify and ask about all underspecified details, design elegant architectures, then implement.
+You are helping a developer implement a new feature. Follow a systematic approach: understand the codebase deeply, identify and ask about all underspecified details, design elegant architectures, implement, then log the outcome — success, failure, or abandonment — to the task log, and (for shipped work) the changelog.
 
 ## Core Principles
 
@@ -14,6 +14,7 @@ You are helping a developer implement a new feature. Follow a systematic approac
 - **Read files identified by agents**: When launching agents, ask them to return lists of the most important files to read. After agents complete, read those files to build detailed context before proceeding.
 - **Simple and elegant**: Prioritize readable, maintainable, architecturally sound code
 - **Use TodoWrite**: Track all progress throughout
+- **Log every outcome**: Whether the task succeeds, fails, or is abandoned, automatically record it (see Phase 8) — unless the user directly says not to log this task. Every attempt goes to the task log so failures aid reminders and learning; successful, shipped work additionally goes to the changelog.
 
 ---
 
@@ -121,5 +122,43 @@ If the user says "whatever you think is best", provide your recommendation and g
    - Key decisions made
    - Files modified
    - Suggested next steps
+
+---
+
+## Phase 8: Logging (Task Log + Changelog)
+
+**Goal**: Record what happened with this task so it becomes a durable record — for reminders, learning from failure, and project tracking.
+
+**When this runs**: On EVERY outcome — whether the feature was **completed**, **failed**, or **abandoned** — UNLESS the user gave a direct instruction not to log this task (e.g. "don't log this", "no worklog/changelog"). Reaching an end state, even an unsuccessful one, is itself worth recording.
+
+There are two destinations, with different rules.
+
+### 8a. Task log — always (records every outcome)
+
+1. Locate the task log. Check, in order: `docs/TASK_LOG.md`, `TASK_LOG.md`, `WORKLOG.md`. Use the first that exists; otherwise create `docs/TASK_LOG.md` (or `TASK_LOG.md` at the repo root if there is no `docs/` directory).
+2. Prepend a new entry (newest first) capturing:
+   - **Date** and a short **task title**
+   - **Outcome**: `Completed` | `Failed` | `Abandoned`
+   - **Summary**: what was attempted or built
+   - For `Failed` / `Abandoned`: the **Reason** it stopped, and a **Lesson / next step** so the failure teaches something
+3. Match the file's existing entry style if it already has one; otherwise use a simple, consistent format like the example below.
+
+```
+## 2026-07-19 — OAuth Google/GitHub sign-in
+- **Outcome**: Failed
+- **Summary**: Attempted an OAuth provider abstraction plus routes/middleware
+- **Reason**: Provider callback conflicts with the existing session middleware
+- **Lesson / next step**: Make session middleware provider-agnostic before retrying
+```
+
+### 8b. Changelog — successful, shipped work only
+
+1. **Only if** the outcome is `Completed` and verified, also record it in the project changelog. Failed and abandoned work does NOT go in the changelog — release notes describe what shipped, not what was tried.
+2. Locate the changelog: `CHANGELOG.md`, `CHANGELOG`, `docs/CHANGELOG.md`, `HISTORY.md` — first that exists; otherwise create `CHANGELOG.md` using the [Keep a Changelog](https://keepachangelog.com) convention with an `## [Unreleased]` section.
+3. **Match the existing file's style exactly** (heading levels, bullet character, tense, and Added / Changed / Fixed grouping). Add **one** concise, user-facing entry under the unreleased section, and **avoid duplicates** — refine an equivalent existing entry rather than adding a second.
+
+**Finally**: add any file you touched here to the Phase 7 list of modified files, and tell the user exactly what you logged and where.
+
+**Keep entries short**: a line or two each — the task log is a running journal, the changelog is release notes.
 
 ---
