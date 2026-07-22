@@ -135,7 +135,7 @@ There are two destinations, with different rules.
 
 ### 8a. Task log — always (records every outcome)
 
-1. Locate the task log. Check, in order: `docs/TASK_LOG.md`, `TASK_LOG.md`, `WORKLOG.md`. Use the first that exists; otherwise create `docs/TASK_LOG.md`.
+1. Locate the task log. Check, in order: `docs/TASK_LOG.md`, `TASK_LOG.md`, `WORKLOG.md`. Use the first that exists; otherwise create `docs/TASK_LOG.md` (or `TASK_LOG.md` at the repo root if there is no `docs/` directory).
 2. Prepend a new entry (newest first) capturing:
    - **Date** and a short **task title**
    - **Outcome**: `Completed` | `Failed` | `Abandoned`
