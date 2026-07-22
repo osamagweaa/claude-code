@@ -44,7 +44,9 @@ def fake_snapshot(monkeypatch: pytest.MonkeyPatch) -> list[ProcessInfo]:
         _proc("bravo", 2, cpu=50.0, mem=2.0, rss=200),
         _proc("charlie", 3, cpu=1.0, mem=40.0, rss=4_000),
     ]
-    monkeypatch.setattr(server, "_iter_process_info", lambda: list(processes))
+    monkeypatch.setattr(
+        server, "_iter_process_info", lambda cpu_interval=None: list(processes)
+    )
     return processes
 
 
@@ -59,8 +61,8 @@ def test_tool_registered_with_expected_schema() -> None:
     assert tool.description, "tool must document itself for the LLM client"
 
     props = tool.inputSchema.get("properties", {})
-    assert set(props) == {"limit", "sort_by"}
-    # Both arguments are optional.
+    assert set(props) == {"limit", "sort_by", "cpu_interval"}
+    # All arguments are optional.
     assert tool.inputSchema.get("required", []) == []
 
 
@@ -192,3 +194,118 @@ def test_iter_skips_inaccessible_processes(
     assert len(result) == 1
     assert result[0]["name"] == "ok"
     assert result[0]["memory_rss_bytes"] == 4_096
+
+
+# --------------------------------------------------------------------------- #
+# CPU sampling (two-read measurement)
+# --------------------------------------------------------------------------- #
+class _CpuFakeMemory:
+    rss = 2_048
+
+
+class _CpuFakeProc:
+    """Fake process whose ``cpu_percent()`` yields successive samples.
+
+    psutil reports ``0.0`` on the first ``cpu_percent()`` read (priming) and a
+    real value only on a second read after a delay. This fake mimics that so we
+    can prove the sampling logic without depending on real CPU load.
+    """
+
+    def __init__(self, name: str, pid: int, samples: list[float], mem: float) -> None:
+        self._info = {
+            "name": name,
+            "pid": pid,
+            "cpu_percent": samples[0],
+            "memory_percent": mem,
+            "memory_info": _CpuFakeMemory(),
+        }
+        self._samples = samples
+        self._calls = 0
+
+    @property
+    def info(self) -> dict[str, object]:
+        return self._info
+
+    def cpu_percent(self, interval: float | None = None) -> float:
+        idx = min(self._calls, len(self._samples) - 1)
+        self._calls += 1
+        return self._samples[idx]
+
+
+def _patch_procs(monkeypatch, procs, slept):
+    monkeypatch.setattr(server.time, "sleep", lambda seconds: slept.append(seconds))
+    monkeypatch.setattr(psutil, "process_iter", lambda attrs=None: list(procs))
+
+
+def test_cpu_sampling_uses_second_read(monkeypatch):
+    slept: list[float] = []
+    procs = [_CpuFakeProc("a", 1, samples=[0.0, 42.0], mem=1.0)]
+    _patch_procs(monkeypatch, procs, slept)
+
+    result = server._iter_process_info(cpu_interval=0.1)
+
+    assert slept == [0.1]  # it waited between the two reads
+    assert result[0]["cpu_percent"] == 42.0  # the real second read, not 0.0
+
+
+def test_no_cpu_sampling_by_default(monkeypatch):
+    slept: list[float] = []
+    procs = [_CpuFakeProc("a", 1, samples=[7.0, 999.0], mem=1.0)]
+    _patch_procs(monkeypatch, procs, slept)
+
+    result = server._iter_process_info()  # no interval -> fast path
+
+    assert slept == []  # no wait
+    assert result[0]["cpu_percent"] == 7.0  # value from the single snapshot
+
+
+def test_sort_by_cpu_triggers_sampling(monkeypatch):
+    slept: list[float] = []
+    procs = [
+        _CpuFakeProc("low", 1, samples=[0.0, 5.0], mem=1.0),
+        _CpuFakeProc("high", 2, samples=[0.0, 90.0], mem=1.0),
+    ]
+    _patch_procs(monkeypatch, procs, slept)
+
+    result = collect_processes(sort_by="cpu")
+
+    assert slept and slept[0] > 0  # sorting by cpu forces a real measurement
+    assert result[0]["name"] == "high"
+    assert result[0]["cpu_percent"] == 90.0
+
+
+def test_sort_by_memory_skips_sampling(monkeypatch):
+    slept: list[float] = []
+    procs = [_CpuFakeProc("a", 1, samples=[0.0, 50.0], mem=1.0)]
+    _patch_procs(monkeypatch, procs, slept)
+
+    collect_processes(sort_by="memory")
+
+    assert slept == []  # no cpu cost when the caller didn't ask for cpu
+
+
+def test_explicit_cpu_interval_forces_sampling(monkeypatch):
+    slept: list[float] = []
+    procs = [_CpuFakeProc("a", 1, samples=[0.0, 12.0], mem=1.0)]
+    _patch_procs(monkeypatch, procs, slept)
+
+    result = collect_processes(sort_by="memory", cpu_interval=0.2)
+
+    assert slept == [0.2]  # explicit interval overrides the memory default
+    assert result[0]["cpu_percent"] == 12.0
+
+
+def test_zero_cpu_interval_skips_sampling(monkeypatch):
+    slept: list[float] = []
+    procs = [_CpuFakeProc("a", 1, samples=[3.0, 999.0], mem=1.0)]
+    _patch_procs(monkeypatch, procs, slept)
+
+    result = collect_processes(cpu_interval=0)
+
+    assert slept == []  # zero means "don't wait"
+    assert result[0]["cpu_percent"] == 3.0
+
+
+def test_negative_cpu_interval_raises() -> None:
+    with pytest.raises(ValueError, match="cpu_interval"):
+        collect_processes(cpu_interval=-1)

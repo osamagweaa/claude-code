@@ -12,10 +12,11 @@ macOS.
 
 ## The `get_running_processes` tool
 
-| Argument  | Type                        | Required | Description                                                       |
-| --------- | --------------------------- | -------- | ----------------------------------------------------------------- |
-| `limit`   | `int`                       | No       | Maximum number of processes to return. Must be non-negative.      |
-| `sort_by` | `"cpu"` \| `"memory"`       | No       | Sort descending by CPU or memory usage. Omit to keep OS order.    |
+| Argument       | Type                  | Required | Description                                                                                 |
+| -------------- | --------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| `limit`        | `int`                 | No       | Maximum number of processes to return. Must be non-negative.                                |
+| `sort_by`      | `"cpu"` \| `"memory"` | No       | Sort descending by CPU or memory usage. Omit to keep OS order.                              |
+| `cpu_interval` | `float`               | No       | Seconds to spend measuring CPU. Omit for automatic behaviour; `0` skips it. Non-negative.   |
 
 Each returned record is a structured object:
 
@@ -31,13 +32,32 @@ Each returned record is a structured object:
 
 * `name` — process image name
 * `pid` — process ID
-* `cpu_percent` — CPU usage percentage (as reported by `psutil`)
+* `cpu_percent` — CPU usage percentage (see the note below)
 * `memory_percent` — resident memory as a percentage of total physical memory
 * `memory_rss_bytes` — resident set size in bytes
 
 Processes that vanish or deny access mid-enumeration are skipped cleanly rather than
 aborting the whole snapshot, and invalid arguments raise a clear `ValueError` that the
 MCP client receives as a structured tool error.
+
+### A note on `cpu_percent`
+
+CPU usage is a *rate*: it only has meaning when measured across two reads a short moment
+apart (like working out a car's speed from two photos). `psutil`'s first read of a
+process always returns `0.0` — it just starts the clock — so a single snapshot cannot
+report real CPU numbers.
+
+Because of that, the tool measures CPU on a two-read basis:
+
+* When you pass `sort_by="cpu"`, it automatically waits a short interval
+  (`DEFAULT_CPU_INTERVAL`, 0.1s) between two reads so the ranking is meaningful.
+* When you don't need CPU (e.g. `sort_by="memory"` or no sort), it skips the wait and
+  `cpu_percent` may be `0.0` — fast, but not a real measurement.
+* Pass `cpu_interval` explicitly to override: a value like `0.5` forces an accurate
+  measurement (a longer wait smooths the reading), and `0` disables it for speed.
+
+On a mostly idle machine, even a correct two-read measurement can read near `0.0`
+simply because little CPU is being used during the interval — that is expected, not a bug.
 
 ## Install & run
 
